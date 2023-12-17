@@ -1,0 +1,19 @@
+---
+title: "Wine Quality"
+author: "Franco Reinaldo Bonifacini"
+date: "2023-12-19"
+output:
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+runtime: shiny
+---
+
+```{r setup}
+library(shinydashboard)
+dashboardPage(
+  dashboardHeader(title = 'Wine Quality', colors('#8B0000')),
+  dashboardSidebar(),
+  dashboardBody()
+)
+```
