@@ -12,6 +12,7 @@ runtime: shiny
 source ("dataset_dashboard.R")
 # Libraries
 library(tidyverse)
+library(shiny)
 library(shinydashboard)
 library(flexdashboard)
 library(plotly)
