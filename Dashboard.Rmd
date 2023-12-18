@@ -1,31 +1,276 @@
 ---
-title: "Wine Quality"
+title: "Decoding Wine Quality"
 output: 
   flexdashboard::flex_dashboard:
-    orientation: columns
+    orientation: rows
     vertical_layout: fill
 runtime: shiny
 ---
 
-```{r global, include=FALSE}
-library(dplyr)
-
-import_dataset <- read.csv('C:\\Users\\franc\\Documents\\GitHub\\rproject\\Dataset\\winequality.csv')
-
-wine_dataset <- import_dataset %>%
-  dplyr::mutate_all(~ ifelse(is.na(.), 0, .))
+```{r setup, include=FALSE}
+# Import dataset (wine_dataset) from an .R document:
+source ("dataset_dashboard.R")
+# Libraries
+library(tidyverse)
+library(shinydashboard)
+library(flexdashboard)
+library(plotly)
 ```
+
+Variables Correlations
+=======================================================================
 
 Column {.sidebar}
 -----------------------------------------------------------------------
 
-Waiting time between eruptions and the duration of the eruption for the
-Old Faithful geyser in Yellowstone National Park, Wyoming, USA.
+```{r}
+selectInput("type", label = "Select wine type:",
+            choices = unique(wine_dataset$type), selected = "red")
+```
+\
+
+**Variables that influence both red and white wines:**
+
+<span style="font-size: 11px;">
+**Fixed acidity:** influences taste, pH, and overall wine life.
+\
+**Volatile acidity:** refers to steam-distillable acids.
+\
+**Citric acid:** provides a certain freshness to the wine.
+\
+**Residual sugar:** the amount of sugar that could not be fermented.
+\
+**Chlorides:** mineral salts in the wine.
+\
+**Free sulfur dioxide:** a powerful antimicrobial agent.
+\
+**Total sulfur dioxide:** used as a preservative, antioxidant, and antiseptic.
+\
+**Density:** also known as "specific gravity," an analytical parameter of wine.
+\
+**pH:** a measure of acidity or alkalinity in an aqueous solution.
+\
+**Sulphates:** another preservative, antimicrobial, and antioxidant.
+\
+**Alcohol:** being wine a fermented beverage, it has an alcohol content.
+\
+**Quality:** a rating reflecting the overall quality of the wine.
+</span>
+
+Row
+-----------------------------------------------------------------------
+
+### Dataset records {.value-box}
+```{r}
+valueBox(value = nrow(wine_dataset), "Dataset records", icon = "fa-database")
+```
+
+### Wine type records {.value-box}
+```{r}
+type_sample <- reactive({
+  filter(wine_dataset, type == input$type)
+})
+
+renderValueBox({
+  valueBox(value = nrow(type_sample()), "Wine type records", icon = "fa-wine-glass")
+})
+```
+
+### Average quality {.value-box}
+```{r}
+avg_quality <- reactive({
+  filter(wine_dataset, type == input$type)
+})
+
+renderValueBox({
+  valueBox(value = round(mean(avg_quality()$quality), 1), "Average quality", icon = "fa-circle-check")
+})
+```
+
+Row
+-----------------------------------------------------------------------
+
+### **Correlation heatmap** {data-width=650}
+```{r}
+renderPlotly({
+  selected_cor <- switch(input$type, "red" = red_cor, "white" = white_cor, red_cor)
+    
+plot_ly(x = colnames(selected_cor), y = rownames(selected_cor), z = selected_cor, type = "heatmap")
+  })
+```
+
+### **Quality correlation and p-value** {data-width=370}
+<span style="font-size: 11px;">
+_Statistically significant if p_value < 0.05_
+</span>
+```{r}
+renderTable({
+  corr_pvalue <- switch(input$type, "red" = df_red_cor, "white" = df_white_cor, df_red_cor)
+  
+  corr_pvalue}
+  , digits = 2, container = tags$table(style = 'overflow-x:auto;'), rownames = TRUE)
+```
+
+Variables Analysis
+=======================================================================
+
+Column {.sidebar}
+-----------------------------------------------------------------------
 
 ```{r}
-selectInput("type", label = "Wine type:",
-            choices = unique(wine_dataset$type))
+sliderInput("quality", label = "Select wine quality:",
+            min = 1, max = 9, value = 5, step = 1)
+```
+**Sample size:**
+```{r}
+quality_sample <- reactive({
+  filter(wine_dataset, quality == input$quality)
+})
 
-sliderInput("bw_adjust", label = "Bandwidth adjustment:",
-            min = 0.2, max = 2, value = 1, step = 0.2)
+renderText({nrow(quality_sample())})
+```
+\
+
+**Variables that influence wines' quality:**
+
+<span style="font-size: 11px;">
+**Fixed acidity:** influences taste, pH, and overall wine life.
+\
+**Volatile acidity:** refers to steam-distillable acids.
+\
+**Citric acid:** provides a certain freshness to the wine.
+\
+**Residual sugar:** the amount of sugar that could not be fermented.
+\
+**Chlorides:** mineral salts in the wine.
+\
+**Free sulfur dioxide:** a powerful antimicrobial agent.
+\
+**Total sulfur dioxide:** used as a preservative, antioxidant, and antiseptic.
+\
+**Density:** also known as "specific gravity," an analytical parameter of wine.
+\
+**pH:** a measure of acidity or alkalinity in an aqueous solution.
+\
+**Sulphates:** another preservative, antimicrobial, and antioxidant.
+\
+**Alcohol:** being wine a fermented beverage, it has an alcohol content.
+</span>
+
+Row
+-----------------------------------------------------------------------
+
+### **Fixed acidity**
+```{r}
+fixedac <- reactive({
+  filter(wine_dataset, quality == input$quality)
+})
+
+renderPlotly({
+    plot_ly(fixedac(), y = ~fixed.acidity, type = "box", 
+            color = ~type, colors = c("#8E0000", "#E7D40A")) %>%
+    layout(yaxis = list(title = "g/dm3"))
+  })
+```
+
+### **Citric acid**
+```{r}
+citrica <- reactive({
+  filter(wine_dataset, quality == input$quality)
+})
+
+renderPlotly({
+    plot_ly(citrica(), y = ~citric.acid, type = "box", 
+            color = ~type, colors = c("#8E0000", "#E7D40A")) %>%
+    layout(yaxis = list(title = "g/dm3"))
+  })
+```
+
+### **Volatile acidity**
+```{r}
+volatile <- reactive({
+  filter(wine_dataset, quality == input$quality)
+})
+
+renderPlotly({
+    plot_ly(volatile(), y = ~volatile.acidity, type = "box", 
+            color = ~type, colors = c("#8E0000", "#E7D40A")) %>%
+    layout(yaxis = list(title = "g/dm3"))
+  })
+```
+
+Row
+-----------------------------------------------------------------------
+
+### **PH**
+```{r}
+ph <- reactive({
+  filter(wine_dataset, quality == input$quality)
+})
+
+renderPlotly({
+    plot_ly(ph(), x = ~pH, type = "histogram", 
+            color = ~type, colors = c("#8E0000", "#E7D40A")) %>%
+    layout(xaxis = list(range = c(2.7, 3.8)))
+  })
+```
+
+### **Density**
+```{r}
+density <- reactive({
+  filter(wine_dataset, quality == input$quality)
+})
+
+renderPlotly({
+    plot_ly(density(), x = ~type, y = ~density, split = ~type, type = "violin",
+            box = list(visible = T), meanline = list(visible = T), 
+            color = ~type, colors = c("#8E0000", "#E7D40A")) %>%
+    layout(yaxis = list(title = "Density (g/cm3)"))
+  })
+```
+
+### **Chlorides vs sulphates**
+```{r}
+chlo_sulph <- reactive({
+  filter(wine_dataset, quality == input$quality)
+})
+
+renderPlotly({
+    plot_ly(chlo_sulph(), x = ~sulphates, y = ~chlorides, type = "scatter", 
+          mode = "markers", color = ~type, colors = c("#8E0000", "#E7D40A"),
+          opacity = 0.7) %>%
+    layout(xaxis = list(title = "Sulphates (g/dm3)", range = c(0.26, 2)),
+           yaxis = list(title = "Chlorides (g/dm3)"))
+  })
+```
+
+Row
+-----------------------------------------------------------------------
+
+### **Alcohol vs residual sugar**
+```{r}
+alcohol_sugar <- reactive({
+  filter(wine_dataset, quality == input$quality)
+})
+
+renderPlotly({
+    plot_ly(alcohol_sugar(), x = ~residual.sugar, y = ~alcohol, type = "scatter", 
+          mode = "markers", color = ~type, colors = c("#8E0000", "#E7D40A"),
+          opacity = 0.7) %>%
+    layout(xaxis = list(title = "Residual Sugar (g/dm^3)"), yaxis = list(title = "Alcohol (%)"))
+  })
+```
+
+### **Sulfur dioxide**
+```{r}
+sulfur_dioxide <- reactive({
+  filter(wine_dataset, quality == input$quality)
+})
+
+renderPlotly({
+    plot_ly(sulfur_dioxide(), x = ~total.sulfur.dioxide, y = ~free.sulfur.dioxide, type = "scatter", 
+            mode = "markers", color = ~type, colors = c("#8E0000", "#E7D40A"),
+            opacity = 0.7) %>%
+    layout(xaxis = list(title = "Total (mg/dm^3)"), yaxis = list(title = "Free (mg/dm^3)"))
+  })
 ```
