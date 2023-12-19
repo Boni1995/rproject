@@ -111,7 +111,7 @@ summary(wine_dataset)
 ```
 \
 
-|   Regarding the summary above, it is evident that null values exists. Therefore, it was important to assess and determine their representativeness concerning the dataset Fortunately, the attribute with the most nulls is 'fixed.acidity', with only 10 rows affected, representing just a 0.15%. 
+|   Regarding the summary above, it is evident that null values exists. Therefore, it was important to assess and determine their representativeness concerning the dataset. Fortunately, the attribute with the most nulls is 'fixed.acidity', with only 10 rows affected, representing just a 0.15%. 
 
 ```{r}
 nulls <- colSums(is.na(wine_dataset))
